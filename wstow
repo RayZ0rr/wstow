@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+
+# source :- https://stackoverflow.com/a/8574392/17843293
 containsElement () {
   local e match="$1"
   shift
