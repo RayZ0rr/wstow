@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+containsElement () {
+  local e match="$1"
+  shift
+  for e; do [[ "$e" == "$match" ]] && return 0; done
+  return 1
+}
+
+case "${1}" in
+	"dry")  	  for i in "${@: 4}" ; do
+								! [[ -d "${3}/${i}" ]] && mkdir -p "${3}/${i}"
+								stow -n -v --no-folding -t "${3}/${i}" -d "$2" -S "$i";
+							done
+							exit 0 ;;
+	"file")  	  for i in "${@: 4}" ; do
+								! [[ -d "${3}/${i}" ]] && mkdir -p "${3}/${i}"
+								stow -v --no-folding -t "${3}/${i}" -d "$2" -S "$i";
+							done
+							exit 0 ;;
+	"folder")  	for i in "${@: 4}" ; do
+								! [[ -d "${3}/${i}" ]] && mkdir -p "${3}/${i}"
+								stow -v -t "${3}/${i}" -d "$2" -S "$i";
+							done
+							exit 0 ;;
+	"delete")  	for i in "${@: 4}" ; do
+								stow -v -t "${3}/${i}" -d "$2" -D "$i";
+							done
+							exit 0 ;;
+	"restow")  	for i in "${@: 4}" ; do
+								stow -v -t "${3}/${i}" -d "$2" -R "$i";
+							done
+							exit 0 ;;
+	"ignore")   readarray -td '\n' myArray3 < <(find "${2}" -maxdepth 1 -not -path "${2}" -type d -printf "%f")
+							myArray1=( $(find "${2}" -maxdepth 1 -not -path "${2}" -type d -printf "%f ") )
+							myArray2=( "$@" )
+							location="${3}"
+							if test "${location: -1}" != "/"
+							then
+									location="$location/"
+							fi
+							for pack in "${myArray1[@]}" ; do
+								if ! containsElement "${pack}" "${myArray2[@]}" ; then
+									[[ ! -d "${location}${pack}" ]] && mkdir -p "${location}${pack}" ;
+									stow -v --no-folding -t "${location}${pack}" -d "$2" -S "${pack}"
+								fi
+							done
+							exit 0 ;;
+	"fignore")  readarray -d '' myArray3 < <(find "${2}" -maxdepth 1 -not -path "${2}" -type d -printf "%f\n")
+							myArray1=( $(find "${2}" -maxdepth 1 -not -path "${2}" -type d -printf "%f ") )
+							myArray2=( "$@" )
+							location="${3}"
+							if test "${location: -1}" != "/"
+							then
+									location="$location/"
+							fi
+							for pack in "${myArray1[@]}" ; do
+								if ! containsElement "${pack}" "${myArray2[@]}" ; then
+									[[ ! -d "${location}${pack}" ]] && mkdir -p "${location}${pack}" ;
+									stow -v -t "${location}${pack}" -d "$2" -S "${pack}"
+								fi
+							done
+							exit 0 ;;
+	*)          echo "dstow {options} <package_directory> [ <package names> | <ignore names> ]";
+							echo "Options : dry, link, delete, restow, folder, ignore, fignore";
+							exit 1 ;;
+esac
+
+# vim: ft=bash:
